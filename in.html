@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cinematic Parallax Image Slider</title>
+  <style>
+    * {margin:0;padding:0;box-sizing:border-box;}
+    body {
+      font-family: "Poppins", sans-serif;
+      background: linear-gradient(120deg, #dbe6f6, #c5796d);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .slider-container {
+      position: relative;
+      width: 85%;
+      max-width: 950px;
+      height: 520px;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      background: #000;
+      perspective: 1000px;
+    }
+
+    .background-blur {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      filter: blur(20px);
+      background-size: cover;
+      background-position: center;
+      transition: background-image 1s ease;
+    }
+
+    .slider {
+      display: flex;
+      transition: transform 1.2s cubic-bezier(0.77,0,0.175,1);
+      height: 100%;
+      position: relative;
+      z-index: 1;
+    }
+
+    .slide {
+      min-width: 100%;
+      height: 100%;
+      position: relative;
+      overflow: hidden;
+      transform: scale(0.95);
+      opacity: 0.3;
+      transition: all 1s ease;
+    }
+
+    .slide.active {
+      transform: scale(1);
+      opacity: 1;
+    }
+
+    .slide img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scale(1.2);
+      transition: transform 1.5s ease;
+    }
+
+    .slide.active img {
+      transform: scale(1);
+    }
+
+    .overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      padding: 50px 40px;
+      color: #fff;
+      background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+      text-shadow: 0 3px 10px rgba(0,0,0,0.5);
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 0.8s ease;
+    }
+
+    .slide.active .overlay {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .overlay h2 {
+      font-size: 2em;
+      margin-bottom: 10px;
+    }
+
+    .overlay p {
+      font-size: 1em;
+      max-width: 70%;
+      margin-bottom: 15px;
+      line-height: 1.5;
+    }
+
+    .overlay button {
+      background: #007bff;
+      color: #fff;
+      border: none;
+      padding: 10px 18px;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .overlay button:hover {
+      background: #005ad3;
+    }
+
+    /* Navigation */
+    .prev, .next {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255,255,255,0.3);
+      border: none;
+      font-size: 35px;
+      cursor: pointer;
+      color: #fff;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      transition: all 0.3s ease;
+      z-index: 10;
+    }
+
+    .prev:hover, .next:hover {
+      background: rgba(255,255,255,0.6);
+      color: #000;
+    }
+
+    .prev {left: 20px;}
+    .next {right: 20px;}
+
+    /* Dots + progress bar */
+    .controls {
+      position: absolute;
+      bottom: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      z-index: 10;
+    }
+
+    .dot {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      margin: 0 5px;
+      background: rgba(255,255,255,0.4);
+      border-radius: 50%;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .dot.active {background: #fff;}
+
+    .progress {
+      width: 100%;
+      height: 3px;
+      background: rgba(255,255,255,0.3);
+      margin-top: 8px;
+      position: relative;
+      overflow: hidden;
+      border-radius: 2px;
+    }
+
+    .progress-bar {
+      width: 0;
+      height: 100%;
+      background: #00bfff;
+      transition: width linear;
+    }
+
+    /* Loader */
+    .loader {
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #007bff;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      position: absolute;
+      top: 45%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    @keyframes spin {0%{transform:rotate(0);}100%{transform:rotate(360deg);}}
+
+    /* Pause/Play */
+    .pause-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(255,255,255,0.3);
+      color: #fff;
+      border: none;
+      font-size: 20px;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      cursor: pointer;
+      transition: background 0.3s;
+      z-index: 10;
+    }
+    .pause-btn:hover {background: rgba(255,255,255,0.6);color:#000;}
+
+    @media (max-width:768px){
+      .overlay h2{font-size:1.3em;}
+      .overlay p{max-width:90%;}
+      .overlay button{padding:8px 12px;}
+      .slide img{height:100%;}
+    }
+  </style>
+</head>
+<body>
+  <div class="slider-container" id="sliderContainer">
+    <div class="background-blur" id="bgBlur"></div>
+    <div id="loader" class="loader"></div>
+    <div class="slider" id="slider"></div>
+    <button class="prev" onclick="moveSlide(-1)">&#10094;</button>
+    <button class="next" onclick="moveSlide(1)">&#10095;</button>
+    <button class="pause-btn" id="pauseBtn">&#10074;&#10074;</button>
+    <div class="controls">
+      <div id="dots"></div>
+      <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+    </div>
+  </div>
+
+  <script>
+    const slider = document.getElementById("slider");
+    const loader = document.getElementById("loader");
+    const dotsContainer = document.getElementById("dots");
+    const bgBlur = document.getElementById("bgBlur");
+    const progressBar = document.getElementById("progressBar");
+    const pauseBtn = document.getElementById("pauseBtn");
+
+    let slidesData = [];
+    let currentSlide = 0;
+    let interval;
+    let autoplay = true;
+    const autoplayTime = 5000;
+
+    const fetchImages = async () => {
+      return [
+        {url:"https://picsum.photos/id/1074/950/520",title:"The Sky Realm",desc:"Where clouds meet the peaks of imagination."},
+        {url:"https://picsum.photos/id/1041/950/520",title:"Urban Mirage",desc:"Reflections of modern life captured in motion."},
+        {url:"https://picsum.photos/id/1021/950/520",title:"Endless Sands",desc:"A timeless landscape shaped by whispers of the wind."},
+        {url:"https://picsum.photos/id/1003/950/520",title:"The Wild Horizon",desc:"Adventure begins where the map fades away."}
+      ];
+    };
+
+    const loadSlider = async () => {
+      slidesData = await fetchImages();
+      loader.style.display = "none";
+
+      slidesData.forEach((slide, i) => {
+        const slideDiv = document.createElement("div");
+        slideDiv.classList.add("slide");
+        slideDiv.innerHTML = `
+          <img src="${slide.url}" alt="${slide.title}" />
+          <div class="overlay">
+            <h2>${slide.title}</h2>
+            <p>${slide.desc}</p>
+            <button>Explore</button>
+          </div>`;
+        slider.appendChild(slideDiv);
+
+        const dot = document.createElement("span");
+        dot.classList.add("dot");
+        dot.addEventListener("click", ()=> showSlide(i));
+        dotsContainer.appendChild(dot);
+      });
+
+      showSlide(0);
+      if (autoplay) startAutoPlay();
+      bgBlur.style.backgroundImage = `url(${slidesData[0].url})`;
+    };
+
+    const showSlide = (index)=>{
+      const slides = document.querySelectorAll(".slide");
+      const dots = document.querySelectorAll(".dot");
+      if(index>=slides.length) currentSlide=0;
+      else if(index<0) currentSlide=slides.length-1;
+      else currentSlide=index;
+
+      slides.forEach((s,i)=>{
+        s.classList.remove("active");
+        dots[i].classList.remove("active");
+      });
+
+      slides[currentSlide].classList.add("active");
+      dots[currentSlide].classList.add("active");
+      slider.style.transform = `translateX(-${currentSlide*100}%)`;
+      bgBlur.style.backgroundImage = `url(${slidesData[currentSlide].url})`;
+
+      resetProgress();
+    };
+
+    const moveSlide = (n)=>{
+      showSlide(currentSlide + n);
+      resetProgress();
+    };
+
+    const startAutoPlay = ()=>{
+      interval = setInterval(()=>moveSlide(1), autoplayTime);
+      animateProgress();
+    };
+
+    const resetProgress = ()=>{
+      progressBar.style.transition = "none";
+      progressBar.style.width = "0";
+      setTimeout(animateProgress,50);
+    };
+
+    const animateProgress = ()=>{
+      progressBar.style.transition = `width ${autoplayTime}ms linear`;
+      progressBar.style.width = "100%";
+    };
+
+    const togglePlay = ()=>{
+      if(autoplay){
+        clearInterval(interval);
+        progressBar.style.transition = "none";
+        pauseBtn.innerHTML = "&#9658;";
+        autoplay=false;
+      } else {
+        autoplay=true;
+        moveSlide(1);
+        startAutoPlay();
+        pauseBtn.innerHTML = "&#10074;&#10074;";
+      }
+    };
+
+    pauseBtn.addEventListener("click", togglePlay);
+
+    // Swipe support
+    let startX=0;
+    slider.addEventListener("touchstart",(e)=> startX=e.touches[0].clientX);
+    slider.addEventListener("touchend",(e)=>{
+      let endX = e.changedTouches[0].clientX;
+      if(startX - endX > 50) moveSlide(1);
+      else if(endX - startX > 50) moveSlide(-1);
+    });
+
+    loadSlider();
+  </script>
+</body>
+</html>
