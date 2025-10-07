@@ -27,7 +27,7 @@ Version Control: Git & GitHub
 
 
 
-Below are screenshots of the slider in action (stored in the /screenshots folder):
+Above are screenshots of the slider in action (stored in the screenshots folder):
 
 Initial slider load
 
